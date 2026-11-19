@@ -131,7 +131,7 @@ let forward=new T.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));car.position.addScale
 let offroad=Math.abs(car.position.x)>8.2||Math.abs(car.position.z+65)>8.2;let rough=offroad?1:0;if(offroad)speed*=Math.exp(-.55*dt);
 let bump=Math.sin(now*13+car.position.z*.11)*.025*Math.min(Math.abs(speed)/25,1);car.position.y=bump;chassis.rotation.z=T.MathUtils.damp(chassis.rotation.z,-steer*speedFactor*.12,.18,dt);chassis.rotation.x=T.MathUtils.damp(chassis.rotation.x,(gas?-.025:brake?.045:0)+Math.sin(now*8)*.008*speedFactor,.12,dt);
 wheelPivots.forEach(w=>{if(w.front)w.pivot.rotation.y=steer*.48;w.wheel.rotation.x-=speed*dt/.43});
-tailLights.forEach(m=>m.emissiveIntensity=brake?3:.3);
+// Las luces de freno aún no tienen una referencia de materiales; no actualizar una variable inexistente.
 if(Math.abs(speed)>15&&Math.abs(steer)>.45&&Math.random()<.6)puff();if(offroad&&Math.abs(speed)>8&&now-lastDust>.045){lastDust=now;puff()}
 let target=car.position.clone().add(new T.Vector3(Math.sin(yaw)*9,4.5,Math.cos(yaw)*9));camera.position.lerp(target,1-Math.exp(-3.4*dt));let look=car.position.clone().addScaledVector(forward,8);look.y+=1.35;camera.lookAt(look);camera.fov=T.MathUtils.damp(camera.fov,68+Math.min(Math.abs(speed)*.22,9),2.2,dt);camera.updateProjectionMatrix();
 if(gain){let rpm= Math.abs(speed)/58;osc.frequency.setTargetAtTime(55+rpm*115+(gas?28:0),audioCtx.currentTime,.08);gain.gain.setTargetAtTime(.018+rpm*.035,audioCtx.currentTime,.12)}
