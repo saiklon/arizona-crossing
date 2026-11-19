@@ -68,13 +68,13 @@ box(2.05,.55,4.3,body,0,.72,0,car);box(1.65,.65,2,body,0,1.2,.1,car);box(1.48,.4
 const wheels=[];for(let s of [-1,1])for(let z of [-1.35,1.35]){const p=new THREE.Group();p.position.set(s*1.02,.43,z);car.add(p);const t=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.28,12),tyre);t.rotation.z=Math.PI/2;p.add(t);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.3,10),chrome);hub.rotation.z=Math.PI/2;p.add(hub);wheels.push({p,front:z<0})}
 const input={gas:false,brake:false,left:false,right:false};document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();input[k]=true;b.classList.add('down')},off=e=>{if(e)e.preventDefault();input[k]=false;b.classList.remove('down')};b.addEventListener('pointerdown',on);b.addEventListener('touchstart',on,{passive:false});window.addEventListener('pointerup',off);window.addEventListener('pointercancel',off);window.addEventListener('touchend',off,{passive:false});window.addEventListener('touchcancel',off,{passive:false})});
 const keys={};addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault()});addEventListener('keyup',e=>keys[e.code]=false);
-let speed=0,yaw=0,started=false,clock=new THREE.Clock(),lastToast=0;
+let speed=0,yaw=0,started=window.__ARIZONA_STARTED__===true,clock=new THREE.Clock(),lastToast=0;
 const places=[{name:'LUCKY STAR GAS',x:52,z:4,r:25,desc:'El surtidor tiene una pegatina que dice “sonríe, estás pagando”. El encargado no sonríe desde 1979.',mission:'La gasolinera Lucky Star',hint:'Un hombre con mono grasiento te observa como si le debieras dinero.'},{name:'LAST CHANCE MOTEL',x:-58,z:9,r:28,desc:'La piscina está vacía, el neón parpadea y la recepción huele a sopa instantánea. La habitación 6 parece respirar.',mission:'El motel Last Chance',hint:'El cartel promete agua caliente. El cartel también miente.'},{name:'DUSTY CREEK',x:0,z:-84,r:34,desc:'Dusty Creek: población 43, contando al perro del sheriff. El bar abre cuando le apetece al dueño.',mission:'El pueblo de Dusty Creek',hint:'Hay un bar, una tienda y demasiadas ventanas con gente mirando.'},{name:'MABEL’S CURIOS',x:-91,z:-247,r:28,desc:'Mabel vende fósiles, recuerdos y mapas que quizá lleven a algún sitio. “No se admiten devoluciones ni preguntas”.',mission:'La tienda de Mabel',hint:'El desvío no aparece en ningún mapa moderno.'}];
 function toast(t){const e=document.querySelector('#toast');e.textContent=t;e.style.opacity=1;clearTimeout(lastToast);lastToast=setTimeout(()=>e.style.opacity=0,3400)}
 function nearest(){let best=null,dist=1e9;for(const p of places){const d=Math.hypot(car.position.x-p.x,car.position.z-p.z);if(d<dist){best=p;dist=d}}return dist<best.r?best:null}
 function inspect(){const p=nearest();if(p)toast(p.desc);else toast('Solo polvo, calor y una radio que dejó de funcionar en Bakersfield.')}
 document.querySelector('#look').addEventListener('click',inspect);
-document.querySelector('#start').addEventListener('click',()=>{started=true;document.querySelector('#intro').classList.add('hidden');toast('Bienvenido al desierto. No hay cobertura, pero sí problemas.')});
+window.addEventListener('arizona-start',()=>{started=true;toast('Bienvenido al desierto. No hay cobertura, pero sí problemas.')});
 function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;
 if(started){const gas=input.gas||keys.KeyW||keys.ArrowUp,brake=input.brake||keys.KeyS||keys.ArrowDown,turn=(input.left||keys.KeyA||keys.ArrowLeft?-1:0)+(input.right||keys.KeyD||keys.ArrowRight?1:0);
 if(gas)speed+=18*dt;else speed*=Math.exp(-.65*dt);if(brake)speed-=34*dt;speed=THREE.MathUtils.clamp(speed,-8,36);
@@ -83,4 +83,7 @@ const p=nearest();document.querySelector('#place').textContent=p?p.name:(Math.ab
 }else{car.rotation.y=Math.sin(t*.35)*.02}
 const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const target=car.position.clone().add(new THREE.Vector3(Math.sin(yaw)*10,6.5,Math.cos(yaw)*10));camera.position.lerp(target,1-Math.exp(-3.2*dt));camera.lookAt(car.position.clone().addScaledVector(f,8).add(new THREE.Vector3(0,1.2,0)));renderer.render(scene,camera)}
 camera.position.set(0,7,35);camera.lookAt(0,1,5);animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-</script></body></html>
+</script><script>
+(()=>{const button=document.getElementById('start');const intro=document.getElementById('intro');if(!button||!intro)return;const begin=(event)=>{event.preventDefault();window.__ARIZONA_STARTED__=true;intro.classList.add('hidden');window.dispatchEvent(new Event('arizona-start'));};button.addEventListener('click',begin);button.addEventListener('touchend',begin,{passive:false});})();
+</script>
+</body></html>
