@@ -18,7 +18,7 @@ const camera=new T.PerspectiveCamera(72,innerWidth/innerHeight,.1,650);camera.po
 const renderer=new T.WebGLRenderer({antialias:true});const mobile=matchMedia('(pointer:coarse)').matches;renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.35:1.8));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!mobile;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;mount.appendChild(renderer.domElement);
 const mat=(c,r=1,m=0)=>new T.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 const sand=mat(0xb77b4d),lightSand=mat(0xc28b5c),rock=mat(0x80513d),redRock=mat(0x9a6047),road=mat(0x343337),stripe=mat(0xe4d3ae),yellow=mat(0xe3b64e),metal=mat(0x45474a,.55,.7),wood=mat(0x5a4030),green=mat(0x3e6045);
-scene.add(new T.HemisphereLight(0xffd8b0,0x59423a,1.65));const sun=new T.DirectionalLight(0xffbd82,3);sun.position.set(-65,48,-35);sun.castShadow=!mobile;scene.add(sun);scene.add(new T.DirectionalLight(0x9baed0,.35).position.set(50,20,30));
+scene.add(new T.HemisphereLight(0xffd8b0,0x59423a,1.65));const sun=new T.DirectionalLight(0xffbd82,3);sun.position.set(-65,48,-35);sun.castShadow=!mobile;scene.add(sun);const fill=new T.DirectionalLight(0x9baed0,.35);fill.position.set(50,20,30);scene.add(fill);
 function box(w,h,d,m,x,y,z,p=scene){let o=new T.Mesh(new T.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=!mobile;o.receiveShadow=true;p.add(o);return o}
 function cyl(rt,rb,h,m,x,y,z,n=9,p=scene){let o=new T.Mesh(new T.CylinderGeometry(rt,rb,h,n),m);o.position.set(x,y,z);p.add(o);return o}
 function ball(r,m,x,y,z,s=[1,1,1]){let o=new T.Mesh(new T.SphereGeometry(r,10,8),m);o.position.set(x,y,z);o.scale.set(...s);scene.add(o);return o}
