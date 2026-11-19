@@ -24,15 +24,22 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 const root=document.querySelector('#game'),scene=new THREE.Scene();scene.background=new THREE.Color(0xd59a78);scene.fog=new THREE.Fog(0xd59a78,100,440);
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.1,800);
-const renderer=new THREE.WebGLRenderer({antialias:!matchMedia('(pointer:coarse)').matches,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;root.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xffe3c4,0x685044,2.1));const sun=new THREE.DirectionalLight(0xffc58e,2.3);sun.position.set(-100,130,-80);scene.add(sun);
+const renderer=new THREE.WebGLRenderer({antialias:!matchMedia('(pointer:coarse)').matches,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;root.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffe8d0,0x594039,1.75));const sun=new THREE.DirectionalLight(0xffc58e,3.1);sun.position.set(-100,130,-80);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-180;sun.shadow.camera.right=180;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-180;sun.shadow.bias=-0.00025;scene.add(sun);
 const mat=(c,r=.9,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 const sand=mat(0xc08a61),dirt=mat(0x9c694b),asphalt=mat(0x454044),line=mat(0xe7cda8),wood=mat(0x80523b),wood2=mat(0xa66d4c),cream=mat(0xe3c69b),roof=mat(0x493b38),rust=mat(0x75412e),glass=mat(0x253d43,.25,.25),dark=mat(0x201e1d),green=mat(0x52634a),neon=mat(0xf3a35d,.35,.1);
 function box(w,h,d,m,x,y,z,p=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p.add(o);return o}
 function cyl(rt,rb,h,m,x,y,z,n=8,p=scene){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n),m);o.position.set(x,y,z);p.add(o);return o}
 function textSprite(label,color='#ffe2b8',bg='#33231c'){const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,512,128);x.strokeStyle='#dca76d';x.lineWidth=7;x.strokeRect(5,5,502,118);x.fillStyle=color;x.font='bold 46px Georgia';x.textAlign='center';x.textBaseline='middle';x.fillText(label,256,65,470);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const m=new THREE.MeshBasicMaterial({map:t,transparent:false});return m}
 function sign(label,x,y,z,w=7,h=1.7){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),textSprite(label));m.position.set(x,y,z);scene.add(m);return m}
-const ground=box(1000,.4,1000,sand,0,-.35,-100);
+function makeTexture(base,detail,repeat=8){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,512,512);for(let i=0;i<24000;i++){const a=Math.random();x.globalAlpha=.04+Math.random()*.12;x.fillStyle=a>.5?detail:'#fff0d5';const s=Math.random()*3+1;x.fillRect(Math.random()*512,Math.random()*512,s,s)}x.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeat,repeat);t.colorSpace=THREE.SRGBColorSpace;return t}
+sand.map=makeTexture('#b9825c','#694635',9);sand.color.set(0xffffff);sand.needsUpdate=true;
+asphalt.map=makeTexture('#393638','#a7a09a',5);asphalt.color.set(0xffffff);asphalt.needsUpdate=true;
+const groundGeo=new THREE.PlaneGeometry(1000,1000,90,90);groundGeo.rotateX(-Math.PI/2);const pos=groundGeo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,Math.sin(x*.018+z*.011)*.9+Math.sin(z*.034)*.35)}groundGeo.computeVertexNormals();const ground=new THREE.Mesh(groundGeo,sand);ground.position.set(0,-.25,-100);ground.receiveShadow=true;scene.add(ground);
+function mesa(x,z,w,h,d,color){const g=new THREE.Group();g.position.set(x,0,z);const m=mat(color);const base=cyl(w*.56,w*.72,h*.72,m,0,h*.36,0,7,g);base.scale.z=d/w;const cap=cyl(w*.53,w*.56,h*.28,mat(color).clone(),0,h*.86,0,7,g);cap.scale.z=d/w;cap.rotation.y=.18;scene.add(g);return g}
+for(let i=0;i<18;i++){const x=(i-9)*82+(Math.random()-.5)*22,z=-390-Math.random()*180;mesa(x,z,45+Math.random()*45,24+Math.random()*42,34+Math.random()*30,i%2?'#9a5e49':'#a96850')}
+const sunDisc=new THREE.Mesh(new THREE.CircleGeometry(15,48),new THREE.MeshBasicMaterial({color:0xffd49a,fog:false}));sunDisc.position.set(-145,82,-310);sunDisc.lookAt(0,15,0);scene.add(sunDisc);
+
 function road(a,b,width=8,material=asphalt){const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),o=box(width,.12,len,material,(a[0]+b[0])/2,-.08,(a[1]+b[1])/2);o.rotation.y=Math.atan2(dx,dz);return o}
 function roadLine(a,b){const dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),o=box(.13,.025,len,line,(a[0]+b[0])/2,-.005,(a[1]+b[1])/2);o.rotation.y=Math.atan2(dx,dz)}
 const roads=[[[-210,0],[210,0]],[[-48,0],[-48,-190]],[[0,0],[0,-230]],[[48,0],[48,-130]],[[0,-105],[105,-155]],[[0,-190],[-110,-250]]];
@@ -45,6 +52,14 @@ for(let xx=-w/2+.65;xx<w/2;xx+=1.4){box(.13,h*.65,.12,wood2,xx,h*.45,-d/2-.08,g)
 box(w*.24,h*.48,.08,glass,0,h*.48,-d/2-.06,g);box(w*.12,h*.55,.12,wood,0,h*.28,-d/2-.13,g);
 scene.add(g);return g}
 function porch(x,z,w,d){box(w,.22,d,wood2,x,.8,z);for(let xx=x-w/2+.3;xx<x+w/2;xx+=w-.6)cyl(.09,.1,1.7,cream,xx,1.65,z-d/2,7)}
+
+// Art direction pass: layered roadside terrain, rock silhouettes, scrub and road shoulders.
+function rock(x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);const a=new THREE.Mesh(new THREE.DodecahedronGeometry(1,1),mat(0x89604a));a.scale.set(1.5*s,.75*s,1.1*s);a.position.y=.3*s;a.rotation.set(Math.random(),Math.random(),Math.random());a.castShadow=true;g.add(a);const b=new THREE.Mesh(new THREE.DodecahedronGeometry(.65,0),mat(0xb17a59));b.scale.set(1.2*s,.55*s,.8*s);b.position.set(.65*s,.2*s,.3*s);g.add(b);scene.add(g)}
+function scrub(x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);for(let j=0;j<5;j++){const q=new THREE.Mesh(new THREE.IcosahedronGeometry(.38*s,1),mat(j%2?0x68704a:0x858052));q.position.set((Math.random()-.5)*s,.28*s,(Math.random()-.5)*s);q.scale.set(1.5,.7,1);g.add(q)}scene.add(g)}
+for(let i=0;i<160;i++){const x=(Math.random()-.5)*650,z=-Math.random()*560+65;if(Math.abs(x)<12&&Math.abs(z)<265)continue;if(Math.random()<.56)rock(x,z,.5+Math.random()*1.8);else scrub(x,z,.7+Math.random()*1.7)}
+// Roadside shoulders soften the hard edges of the asphalt ribbon.
+for(const r of roads){const dx=r[1][0]-r[0][0],dz=r[1][1]-r[0][1],len=Math.hypot(dx,dz),ang=Math.atan2(dx,dz);for(const side of [-1,1]){const shoulder=box(1.15,.08,len,dirt,(r[0][0]+r[1][0])/2+Math.cos(ang)*side*4.35,-.02,(r[0][1]+r[1][1])/2-Math.sin(ang)*side*4.35);shoulder.rotation.y=ang;shoulder.receiveShadow=true}}
+
 // Dusty Creek, a crooked little main street.
 building(-15,-76,12,9,5.4,wood2);building(1,-78,10,8,4.8,cream);building(17,-76,12,9,5.5,wood);building(-16,-94,10,8,4.5,cream);building(3,-96,13,8,5,wood2);building(20,-96,10,8,4.7,wood);
 porch(-15,-70,13,2.5);porch(17,-70,13,2.5);sign('DUSTY CREEK',0,10,-63,12,2.4);sign('BAR & GRILL',-15,6,-70,6,1.3);sign('GENERAL STORE',1,5.5,-72,7,1.2);sign('SHERIFF',17,5.8,-70,5,1.2);
@@ -63,9 +78,9 @@ building(-91,-247,14,10,4.2,wood);sign('MABEL\'S CURIOS',-91,7,-241,11,1.6);
 const wreck=new THREE.Group();box(2,.6,4,rust,0,.55,0,wreck);box(1.6,.5,1.6,glass,0,1,0,wreck);wreck.position.set(28,0,-151);wreck.rotation.y=.5;scene.add(wreck);
 for(let x of [-95,95]){box(12,.3,1,wood2,x,5,-32);cyl(.1,.1,5,dark,x-5,2.5,-32,6);cyl(.1,.1,5,dark,x+5,2.5,-32,6);sign(x<0?'MOTEL 1 MILE':'GAS 1/2 MILE',x,6,-31,10,1.5)}
 // Player's old coupe.
-const car=new THREE.Group();scene.add(car);car.position.set(0,0,22);const body=mat(0x2e7780,.35,.3),bodyDark=mat(0x173c42,.4,.25),tyre=mat(0x171719),chrome=mat(0xb9b7a7,.25,.7);
-box(2.05,.55,4.3,body,0,.72,0,car);box(1.65,.65,2,body,0,1.2,.1,car);box(1.48,.48,1.8,glass,0,1.38,.1,car);box(1.8,.14,1.1,bodyDark,0,1.78,.1,car);box(1.9,.16,.22,bodyDark,0,.48,-2.13,car);
-const wheels=[];for(let s of [-1,1])for(let z of [-1.35,1.35]){const p=new THREE.Group();p.position.set(s*1.02,.43,z);car.add(p);const t=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.28,12),tyre);t.rotation.z=Math.PI/2;p.add(t);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.3,10),chrome);hub.rotation.z=Math.PI/2;p.add(hub);wheels.push({p,front:z<0})}
+const car=new THREE.Group();scene.add(car);car.position.set(0,0,22);const body=mat(0x2e7780,.32,.38),bodyDark=mat(0x173c42,.38,.3),tyre=mat(0x171719),chrome=mat(0xb9b7a7,.22,.75);
+box(2.05,.55,4.3,body,0,.72,0,car);box(1.65,.65,2,body,0,1.2,.1,car);box(1.48,.48,1.8,glass,0,1.38,.1,car);box(1.8,.14,1.1,bodyDark,0,1.78,.1,car);box(1.9,.16,.22,bodyDark,0,.48,-2.13,car);box(2.08,.13,.16,chrome,0,.53,2.12,car);for(const sx of [-.72,.72]){box(.32,.22,.12,mat(0xc85c43),sx,.77,2.16,car);box(.28,.16,.12,mat(0xf1d7a0),sx,.77,-2.17,car);box(.08,.18,1.6,chrome,sx*1.3,.98,.05,car)}box(1.35,.08,.12,chrome,0,1.03,1.14,car);
+const wheels=[];for(let s of [-1,1])for(let z of [-1.35,1.35]){const p=new THREE.Group();p.position.set(s*1.02,.43,z);car.add(p);const t=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,.28,12),tyre);t.rotation.z=Math.PI/2;p.add(t);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.3,10),chrome);hub.rotation.z=Math.PI/2;p.add(hub);for(let k=0;k<8;k++){const spoke=new THREE.Mesh(new THREE.BoxGeometry(.045,.045,.25),chrome);spoke.position.set(0,Math.cos(k*Math.PI/4)*.13,Math.sin(k*Math.PI/4)*.13);p.add(spoke)}wheels.push({p,front:z<0})}
 const input={gas:false,brake:false,left:false,right:false};document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();input[k]=true;b.classList.add('down')},off=e=>{if(e)e.preventDefault();input[k]=false;b.classList.remove('down')};b.addEventListener('pointerdown',on);b.addEventListener('touchstart',on,{passive:false});window.addEventListener('pointerup',off);window.addEventListener('pointercancel',off);window.addEventListener('touchend',off,{passive:false});window.addEventListener('touchcancel',off,{passive:false})});
 const keys={};addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault()});addEventListener('keyup',e=>keys[e.code]=false);
 let speed=0,yaw=0,started=window.__ARIZONA_STARTED__===true,clock=new THREE.Clock(),lastToast=0;
