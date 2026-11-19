@@ -16,7 +16,7 @@ import * as T from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.modul
 const root=document.querySelector('#game'),scene=new T.Scene();scene.background=new T.Color(0xe89b6a);scene.fog=new T.FogExp2(0xc77c55,.0037);
 const camera=new T.PerspectiveCamera(68,innerWidth/innerHeight,.1,900);
 const mobile=matchMedia('(pointer:coarse)').matches;
-const renderer=new T.WebGLRenderer({antialias:!mobile,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.25:1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=!mobile;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;root.appendChild(renderer.domElement);
+const renderer=new T.WebGLRenderer({antialias:!mobile,powerPreference:'high-performance'});const pixelScale=mobile?.58:.68;renderer.setPixelRatio(1);renderer.setSize(Math.max(1,Math.floor(innerWidth*pixelScale)),Math.max(1,Math.floor(innerHeight*pixelScale)));renderer.domElement.style.width='100%';renderer.domElement.style.height='100%';renderer.domElement.style.imageRendering='pixelated';renderer.shadowMap.enabled=!mobile;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;root.appendChild(renderer.domElement);
 const mat=(c,r=1,m=0)=>new T.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 const sand=mat(0xb77b4d),sand2=mat(0xc58b5b),road=mat(0x333337),line=mat(0xe7d5b6),rock=mat(0x88543e),rock2=mat(0xa56a4b),rubber=mat(0x171719),chrome=mat(0x777b7b,.35,.8),bodyMat=mat(0x8b3827,.42,.48),glass=mat(0x1d3036,.2,.45),black=mat(0x17191b,.7,.15);
 scene.add(new T.HemisphereLight(0xffd9b3,0x51403a,1.6));const sun=new T.DirectionalLight(0xffbf86,3);sun.position.set(-70,65,-90);sun.castShadow=!mobile;sun.shadow.mapSize.set(1024,1024);scene.add(sun);const fill=new T.DirectionalLight(0x9eb6d4,.5);fill.position.set(40,20,30);scene.add(fill);
@@ -37,16 +37,78 @@ for(let i=0;i<170;i++){let x=(Math.random()-.5)*850,z=(Math.random()-.5)*850-40;
 for(let s of [-1,1])for(let z=-500;z<500;z+=55){cyl(.13,.18,8,mat(0x59412f),s*12,4,z,8);box(2.1,.14,.14,mat(0x59412f),s*12,7.4,z)}
 // American traffic signal at the junction.
 const signal=new T.Group();signal.position.set(-10,0,-73);cyl(.18,.24,9,chrome,0,4.5,0,12,signal);box(.75,2.9,.65,black,0,7.1,0,signal);const lamps=[];for(let i=0;i<3;i++){let m=mat([0xff3428,0xffb32d,0x43d56b][i]);m.emissive=new T.Color([0xff3428,0xffb32d,0x43d56b][i]);m.emissiveIntensity=.12;lamps.push(m);sphere(.23,m,0,8.05-i*.95,.36,[1,1,.5],signal)}scene.add(signal);let phase=0;function updateSignal(){lamps.forEach((m,i)=>m.emissiveIntensity=i===phase?2.7:.08)}updateSignal();
-// Car: body, detailed cockpit, four independently animated wheels, suspension pivots, lights.
-const car=new T.Group();const chassis=new T.Group();car.add(chassis);
-box(2.05,.58,4.25,bodyMat,0,.78,0,chassis);box(1.8,.12,3.65,mat(0x67291e),0,1.08,0,chassis);
-box(1.62,.78,1.95,bodyMat,0,1.36,-.25,chassis);box(1.48,.57,1.65,glass,0,1.43,-.27,chassis);
-box(1.52,.09,1.95,bodyMat,0,1.79,-.25,chassis);box(1.78,.14,.42,bodyMat,0,1.06,1.78,chassis);
-box(.55,.12,.08,chrome,0,1.12,2.13,chassis);
-const wheelPivots=[];for(let x of [-1.03,1.03])for(let z of [-1.35,1.38]){let pivot=new T.Group();pivot.position.set(x,.48,z);chassis.add(pivot);let w=cyl(.43,.43,.26,rubber,0,0,0,18,pivot);w.rotation.z=Math.PI/2;cyl(.25,.25,.275,chrome,0,0,0,16,pivot).rotation.z=Math.PI/2;wheelPivots.push({pivot,front:z<0,wheel:w})}
-for(let x of [-.68,.68]){let head=new T.SpotLight(0xffe4bd,0,34,.42,.4,1.2);head.position.set(x,.92,-2.1);head.target.position.set(x,.2,-18);chassis.add(head);chassis.add(head.target)}
-const headlights=[];for(let x of [-.68,.68])headlights.push(sphere(.17,mat(0xffe9c5),x,1.03,-2.13,[1,.55,.25],chassis));
-const tailLights=[];for(let x of [-.72,.72]){let m=mat(0xff1d12);m.emissive=new T.Color(0xff1209);m.emissiveIntensity=.3;tailLights.push(m);box(.32,.18,.06,m,x,.95,2.15,chassis)}
+// Hero vehicle: a sculpted modern American performance coupe, with pixel-art rendering.
+const car=new T.Group(),chassis=new T.Group();car.add(chassis);
+const paint=mat(0x176b78,.3,.62),paintDark=mat(0x0b3d49,.32,.58),carbon=mat(0x10191d,.48,.35),glass=mat(0x172a35,.16,.62),chrome=mat(0xa7b5b5,.24,.85),rubber=mat(0x111315,.92),rim=mat(0xc4c9c7,.22,.9),lamp=mat(0xeaf4f2,.14,.3);
+function part(w,h,d,m,x,y,z,group=chassis){return box(w,h,d,m,x,y,z,group)}
+// Wide lower body, sculpted bonnet, cabin and fastback roof.
+part(2.12,.48,4.55,paint,0,.78,0);
+part(2.02,.19,1.45,paint,0,1.04,-1.48);
+part(1.92,.12,1.1,paint,0,1.13,-.12);
+part(1.96,.16,1.18,paintDark,0,1.06,1.57);
+part(1.78,.63,2.12,paint,0,1.35,.12);
+part(1.61,.49,1.88,glass,0,1.48,.04);
+part(1.78,.12,1.92,paint,0,1.77,.02);
+part(1.88,.09,1.02,paint,0,1.82,.57);
+part(1.92,.08,1.05,paint,0,1.16,-.88);
+part(1.94,.08,.95,paint,0,1.18,.96);
+// Front and rear fascias, grille, splitter and vents.
+part(1.9,.28,.2,paintDark,0,.63,-2.27);
+part(1.88,.12,.25,carbon,0,.48,-2.31);
+part(1.12,.24,.035,carbon,0,.72,-2.385);
+for(let i=0;i<7;i++)part(.025,.16,.025,chrome,-.5+i*.165,.72,-2.41);
+part(.54,.14,.05,carbon,-.69,.65,-2.4);part(.54,.14,.05,carbon,.69,.65,-2.4);
+part(1.95,.26,.22,paintDark,0,.64,2.27);
+part(1.85,.08,.26,carbon,0,.48,2.34);
+part(1.8,.08,.38,paint,0,1.39,1.95);
+// Roofline, window pillars and panoramic roof.
+part(1.35,.035,1.5,carbon,0,1.84,.04);
+for(let s of [-1,1]){
+ part(.075,.58,.09,paintDark,s*.79,1.47,-.83);
+ part(.075,.58,.09,paintDark,s*.79,1.47,.82);
+ part(.065,.48,.08,paint,s*.82,1.48,.03);
+ // mirrors, handles, side skirts and sculpted fender shoulders
+ part(.24,.13,.3,paint,s*1.05,1.48,-.73);
+ part(.12,.09,.18,carbon,s*1.17,1.43,-.73);
+ part(.12,.12,.65,paintDark,s*1.03,.65,0);
+ part(.12,.055,.3,chrome,s*1.075,1.08,.1);
+ // side air vents
+ part(.035,.22,.38,carbon,s*1.067,.88,-1.7);
+ // wheel arch highlight trim
+}
+// Windshield and rear glass as angled panels.
+let wind=new T.Mesh(new T.BoxGeometry(1.48,.045,.94),glass);wind.position.set(0,1.57,-.67);wind.rotation.x=-.48;chassis.add(wind);
+let rearGlass=new T.Mesh(new T.BoxGeometry(1.46,.04,.85),glass);rearGlass.position.set(0,1.56,.82);rearGlass.rotation.x=.48;chassis.add(rearGlass);
+// Headlamp housings and LED signatures.
+for(let s of [-1,1]){
+ part(.58,.19,.07,carbon,s*.66,.99,-2.22);
+ part(.47,.075,.035,lamp,s*.66,1.02,-2.27);
+ part(.42,.035,.04,mat(0x5ec4d2,.2,.25),s*.66,.97,-2.28);
+ // Rear LED light bars, split at boot lid.
+ part(.68,.15,.06,mat(0x300c0b),s*.57,.98,2.29);
+ part(.58,.055,.035,mat(0xff3023,.18,.1),s*.57,1.0,2.33);
+}
+// Wheels: wide low-profile tyres, machined multi-spoke alloys, brake discs and red calipers.
+const wheelPivots=[];
+for(let s of [-1,1])for(let z of [-1.42,1.43]){
+ const pivot=new T.Group();pivot.position.set(s*1.04,.49,z);chassis.add(pivot);
+ const tyre=new T.Mesh(new T.CylinderGeometry(.47,.47,.29,12,1),rubber);tyre.rotation.z=Math.PI/2;pivot.add(tyre);
+ const outer=new T.Mesh(new T.TorusGeometry(.345,.055,5,12),rim);outer.rotation.y=Math.PI/2;outer.position.x=s*.16;pivot.add(outer);
+ const disc=new T.Mesh(new T.CylinderGeometry(.29,.29,.045,12),chrome);disc.rotation.z=Math.PI/2;disc.position.x=s*.17;pivot.add(disc);
+ for(let k=0;k<10;k++){let ang=k*Math.PI/5;let spoke=part(.035,.36,.045,rim,0,Math.cos(ang)*.17,Math.sin(ang)*.17,pivot);spoke.rotation.x=ang}
+ part(.11,.23,.08,mat(0xa51e20,.4,.45),s*.2,.02,.18,pivot);
+ const cap=new T.Mesh(new T.CylinderGeometry(.105,.105,.04,12),chrome);cap.rotation.z=Math.PI/2;cap.position.x=s*.2;pivot.add(cap);
+ wheelPivots.push({pivot,front:z<0,wheel:tyre});
+}
+// Door lines, handles, mirrors, spoiler, exhaust tips and badges.
+for(let s of [-1,1]){
+ part(.018,.48,.018,carbon,s*1.067,1.03,-.12);
+ part(.18,.035,.035,chrome,s*1.08,1.29,.45);
+ const exhaust=new T.Mesh(new T.CylinderGeometry(.09,.09,.13,10),chrome);exhaust.rotation.x=Math.PI/2;exhaust.position.set(s*.62,.51,2.35);chassis.add(exhaust);
+}
+part(1.85,.08,.3,paintDark,0,1.63,2.13);
+part(1.65,.055,.18,carbon,0,1.68,2.23);
+part(.42,.055,.16,chrome,0,.82,-2.43);
 car.position.set(0,0,25);scene.add(car);
 // Particle pool for drifting dust and tyre smoke.
 const dustMat=new T.MeshBasicMaterial({color:0xc99a70,transparent:true,opacity:.45,depthWrite:false});const particles=[];for(let i=0;i<90;i++){let mesh=new T.Mesh(new T.SphereGeometry(.12+Math.random()*.16,6,5),dustMat.clone());mesh.visible=false;scene.add(mesh);particles.push({mesh,life:0})}
@@ -76,5 +138,5 @@ if(Math.abs(car.position.z+65)<18&&Math.abs(car.position.x)<18){if(!window._cros
 particles.forEach(p=>{if(p.life>0){p.life-=dt;p.mesh.position.y+=dt*1.25;p.mesh.scale.multiplyScalar(1+dt*.8);p.mesh.material.opacity=Math.max(0,p.life*.35);if(p.life<=0)p.mesh.visible=false}});
 if(Math.floor(now/6)%3===0&&Math.floor(now*2)%12===0){}renderer.render(scene,camera)}
 camera.position.set(0,5,34);camera.lookAt(0,1,20);animate();
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(Math.max(1,Math.floor(innerWidth*pixelScale)),Math.max(1,Math.floor(innerHeight*pixelScale)))});
 </script></body></html>
