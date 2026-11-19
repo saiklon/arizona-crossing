@@ -39,7 +39,7 @@ for(let s of [-1,1])for(let z=-500;z<500;z+=55){cyl(.13,.18,8,mat(0x59412f),s*12
 const signal=new T.Group();signal.position.set(-10,0,-73);cyl(.18,.24,9,chrome,0,4.5,0,12,signal);box(.75,2.9,.65,black,0,7.1,0,signal);const lamps=[];for(let i=0;i<3;i++){let m=mat([0xff3428,0xffb32d,0x43d56b][i]);m.emissive=new T.Color([0xff3428,0xffb32d,0x43d56b][i]);m.emissiveIntensity=.12;lamps.push(m);sphere(.23,m,0,8.05-i*.95,.36,[1,1,.5],signal)}scene.add(signal);let phase=0;function updateSignal(){lamps.forEach((m,i)=>m.emissiveIntensity=i===phase?2.7:.08)}updateSignal();
 // Hero vehicle: a sculpted modern American performance coupe, with pixel-art rendering.
 const car=new T.Group(),chassis=new T.Group();car.add(chassis);
-const paint=mat(0x176b78,.3,.62),paintDark=mat(0x0b3d49,.32,.58),carbon=mat(0x10191d,.48,.35),glass=mat(0x172a35,.16,.62),chrome=mat(0xa7b5b5,.24,.85),rubber=mat(0x111315,.92),rim=mat(0xc4c9c7,.22,.9),lamp=mat(0xeaf4f2,.14,.3);
+const paint=mat(0x176b78,.3,.62),paintDark=mat(0x0b3d49,.32,.58),carbon=mat(0x10191d,.48,.35),windowGlass=mat(0x172a35,.16,.62),rim=mat(0xc4c9c7,.22,.9),lamp=mat(0xeaf4f2,.14,.3);
 function part(w,h,d,m,x,y,z,group=chassis){return box(w,h,d,m,x,y,z,group)}
 // Wide lower body, sculpted bonnet, cabin and fastback roof.
 part(2.12,.48,4.55,paint,0,.78,0);
@@ -47,7 +47,7 @@ part(2.02,.19,1.45,paint,0,1.04,-1.48);
 part(1.92,.12,1.1,paint,0,1.13,-.12);
 part(1.96,.16,1.18,paintDark,0,1.06,1.57);
 part(1.78,.63,2.12,paint,0,1.35,.12);
-part(1.61,.49,1.88,glass,0,1.48,.04);
+part(1.61,.49,1.88,windowGlass,0,1.48,.04);
 part(1.78,.12,1.92,paint,0,1.77,.02);
 part(1.88,.09,1.02,paint,0,1.82,.57);
 part(1.92,.08,1.05,paint,0,1.16,-.88);
@@ -77,8 +77,8 @@ for(let s of [-1,1]){
  // wheel arch highlight trim
 }
 // Windshield and rear glass as angled panels.
-let wind=new T.Mesh(new T.BoxGeometry(1.48,.045,.94),glass);wind.position.set(0,1.57,-.67);wind.rotation.x=-.48;chassis.add(wind);
-let rearGlass=new T.Mesh(new T.BoxGeometry(1.46,.04,.85),glass);rearGlass.position.set(0,1.56,.82);rearGlass.rotation.x=.48;chassis.add(rearGlass);
+let wind=new T.Mesh(new T.BoxGeometry(1.48,.045,.94),windowGlass);wind.position.set(0,1.57,-.67);wind.rotation.x=-.48;chassis.add(wind);
+let rearGlass=new T.Mesh(new T.BoxGeometry(1.46,.04,.85),windowGlass);rearGlass.position.set(0,1.56,.82);rearGlass.rotation.x=.48;chassis.add(rearGlass);
 // Headlamp housings and LED signatures.
 for(let s of [-1,1]){
  part(.58,.19,.07,carbon,s*.66,.99,-2.22);
