@@ -18,7 +18,7 @@
 <div class="bottom"><div class="mission"><small>CUADERNO DE VIAJE</small><b id="mission">El último desvío antes de ninguna parte</b><span id="hint">Busca un lugar donde repostar. Y quizá una cama que no tenga chinches.</span></div></div></div>
 <div id="maptag">MOJAVE COUNTY · 1987</div>
 <div id="controls"><div class="cluster left"><button class="pad" data-key="left">◀</button><button class="pad" data-key="right">▶</button></div><div class="cluster right"><button class="pad interact" id="look">MIRAR</button><button class="pad" data-key="brake">FRENO</button><button class="pad gas" data-key="gas">GAS</button></div></div>
-<div id="intro"><div class="panel"><div class="eyebrow">UNA AVENTURA EN EL FIN DEL MUNDO</div><h1>THE LAST<br><span>EXIT</span></h1><p>Un pequeño mundo abierto en el desierto americano. Recorre carreteras secundarias, visita pueblos olvidados, gasolineras de otra época y moteles que no salen en las guías.<br><br>Conduce con los botones o con WASD / flechas. Acércate a los lugares y pulsa MIRAR.</p><button class="action" id="start">ARRANCAR Y PERDERSE</button></div></div>
+<div id="intro"><div class="panel"><div class="eyebrow">UNA AVENTURA EN EL FIN DEL MUNDO</div><h1>THE LAST<br><span>EXIT</span></h1><p>Un pequeño mundo abierto en el desierto americano. Recorre carreteras secundarias, visita pueblos olvidados, gasolineras de otra época y moteles que no salen en las guías.<br><br>Conduce con los botones o con WASD / flechas. Acércate a los lugares y pulsa MIRAR.</p><button class="action" id="start" type="button" onclick="window.__ARIZONA_STARTED__=true;document.getElementById('intro').classList.add('hidden');window.dispatchEvent(new Event('arizona-start'))">ARRANCAR Y PERDERSE</button></div></div>
 <div id="toast"></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -84,6 +84,6 @@ const p=nearest();document.querySelector('#place').textContent=p?p.name:(Math.ab
 const f=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));const target=car.position.clone().add(new THREE.Vector3(Math.sin(yaw)*10,6.5,Math.cos(yaw)*10));camera.position.lerp(target,1-Math.exp(-3.2*dt));camera.lookAt(car.position.clone().addScaledVector(f,8).add(new THREE.Vector3(0,1.2,0)));renderer.render(scene,camera)}
 camera.position.set(0,7,35);camera.lookAt(0,1,5);animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script><script>
-(()=>{const button=document.getElementById('start');const intro=document.getElementById('intro');if(!button||!intro)return;const begin=(event)=>{event.preventDefault();window.__ARIZONA_STARTED__=true;intro.classList.add('hidden');window.dispatchEvent(new Event('arizona-start'));};button.addEventListener('click',begin);button.addEventListener('touchend',begin,{passive:false});})();
+(()=>{const button=document.getElementById('start');const intro=document.getElementById('intro');if(!button||!intro)return;const begin=()=>{window.__ARIZONA_STARTED__=true;intro.classList.add('hidden');window.dispatchEvent(new Event('arizona-start'));};button.addEventListener('click',begin);button.addEventListener('pointerup',begin);})();
 </script>
 </body></html>
